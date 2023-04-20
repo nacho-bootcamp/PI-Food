@@ -4,7 +4,7 @@ const { DataTypes } = require("sequelize");
 module.exports = (sequelize) => {
   // defino el modelo
   sequelize.define(
-    "recipe",
+    "Recipe",
     {
       id: {
         type: DataTypes.UUID,
@@ -12,13 +12,12 @@ module.exports = (sequelize) => {
         primaryKey: true,
         allowNull: false,
       },
-      name: {
+      title: {
         type: DataTypes.STRING,
         allowNull: false,
       },
       image: {
         type: DataTypes.STRING,
-        allowNull: false,
       },
       summary: {
         type: DataTypes.TEXT,
@@ -31,8 +30,12 @@ module.exports = (sequelize) => {
           max: 100,
         },
       },
-      stepbyStep: {
+      instructions: {
         type: DataTypes.ARRAY(DataTypes.TEXT),
+      },
+      created: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
       },
     },
     { timestamps: false, freezeTableName: true }

@@ -1,43 +1,85 @@
-const { Recipe } = require("../database/index");
+require("dotenv").config();
+const Recipe = require("../database/index");
+const axios = require("axios");
+const API_KEY = process.env;
 
-const getRecipebyId = (id) => {};
+//------ todas las recetas ----------
+// busca de la base de datos
+//buscar de la api
+//unifica
 
+const cleanArray = (arr) =>
+  arr.map((element) => {
+    return {
+      id: element.id,
+      title: element.title,
+      summary: element.summary,
+      image: element.image,
+      created: false,
+    };
+  });
+//------------- buscar todos --------------
+const getAllRecipe = async () => {
+  const databaseRecipe = await Recipe.findAll();
+
+  const apiRecipeRaw = (await axios.get("https://api.spoonacular.com/recipes"))
+    .data;
+
+  const apiRecipe = cleanArray(apiRecipeRaw);
+
+  return [...databaseRecipe, ...apiRecipe];
+};
+
+//----------por name ------------------
+const recipeByName = async (name) => {
+  const baseRecipe = await Recipe.findAll({
+    where: { name: name },
+  });
+  const apiRecipeRaw = (await axios.get("https://api.spoonacular.com/recipes"))
+    .data;
+
+  const apiRecipe = cleanArray(apiRecipeRaw);
+
+  const filterRecipe = apiRecipe.filter((recipe) => recipe.name == name);
+
+  return [...filterRecipe, ...baseRecipe];
+};
+
+//------------por Id
+
+const getRecipebyId = async (id, source) => {
+  const recipe =
+    source === "api"
+      ? await axios
+          .get(`https://api.spoonacular.com/recipes/${id}?key=${API_KEY}`)
+          .then((response) => {
+            const { name, image, summary, healthScore, analyzedInstructions } =
+              response.data;
+            recipeData = {
+              id: id,
+              tile: name,
+              image: image,
+              summary: summary,
+              healthScore: healthScore,
+              instructions: analyzedInstructions[0]?.steps?.map(
+                (step) => step.step
+              ),
+            };
+            return recipeData;
+          })
+      : await Recipe.findByPk(id);
+  return recipe;
+};
+
+//----------------------------crear una receta-------------------
 const createRecipe = async (
-  name,
+  title,
   image,
   summary,
   healthScore,
-  stepbyStep,
-  diets
+  intructions
 ) => {
-  await Recipe.create({ name, image, summary, healthScore, stepbyStep });
-  createRecipe.addDiets(diets);
+  await Recipe.create({ title, image, summary, healthScore, intructions });
+  console.log("Recipe created successfully");
 };
-
-module.exports = { createRecipe, getRecipebyId };
-
-async function getRecipebyId(req, res) {
-  const { id } = req.params;
-  let recipe = {};
-  try {
-    const data = await recipe.findByPk(id);
-    if (data) {
-      let recipes = data;
-      return res.status(200).send(recipes);
-    }
-    await axios(
-      `https://api.spoonacular.com/recipes/${id}?key=77e0e45c970e4defa00a29287c4f3ede`.then(
-        ({ data }) => {
-          recipe = {
-            id: data.id,
-            name: data.name,
-          };
-        }
-      )
-    );
-
-    res.status(200).send("este esel id");
-  } catch (error) {
-    res.status(500).send(error.message);
-  }
-}
+module.exports = { createRecipe, getRecipebyId, getAllRecipe, recipeByName };

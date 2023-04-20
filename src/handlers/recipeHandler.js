@@ -1,41 +1,52 @@
 const {
   createRecipe,
   getRecipebyId,
+  recipeByName,
+  getAllRecipe,
 } = require("../controllers/recipeControllers");
 
-const getAll = (req, res) => {
+//--------------buscar todos ------------------------
+const getAll = async (req, res) => {
   const { name } = req.query;
-  if (name) {
-    res.status(200).send("esta funcionando por nombre");
-  } else {
-    res.status(500).send("mi error");
+  try {
+    const results = name ? await recipeByName(name) : await getAllRecipe();
+    res.status(200).json(results);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
+//-------------Buscar por Id -------------------------
 
 const getId = async (req, res) => {
   const { id } = req.params;
+
   try {
-    const recipe = await getRecipebyId(id);
-    res.status(200).send(recipe);
+    const source = isNaN(id) ? "bdd" : "api";
+    const recipeHandler = await getRecipebyId(id, source);
+    res.status(200).json(recipeHandler);
   } catch (error) {
-    res.status(500).send({ error: error.message });
+    res.status(400).json({ error: error.message });
   }
 };
+//--------------- Post de Recipe ----------------------------
+const postRecipe = async (req, res) => {
+  const { title, image, summary, healthScore, instructions } = req.body;
 
-const postRecipe = (req, res) => {
-  const { name, image, summary, healthScore, stepbyStep, diets } = req.body;
-  try {
-    const newRecipe = createRecipe(
-      name,
-      image,
-      summary,
-      healthScore,
-      stepbyStep,
-      diets
-    );
-    res.status(201).send(newRecipe);
-  } catch (error) {
-    res.status(500).send({ error: error.message });
+  if (!title || !summary) {
+    res.status(404).send("los datos name y summary son necesario");
+  } else {
+    try {
+      const newRecipe = await createRecipe(
+        title,
+        image,
+        summary,
+        healthScore,
+        instructions
+      );
+      res.status(201).json(newRecipe);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
 };
 
