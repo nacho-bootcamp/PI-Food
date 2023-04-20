@@ -1,18 +1,7 @@
-const app = require("./app");
-const sequelize = require("../database");
+const server = require("./app");
+const { conn } = require("../database/index");
 
-function main() {
-  app.listen(3001, async () => {
-    try {
-      await sequelize.authenticate();
-      await sequelize.sync();
-
-      console.log("estamos conectado");
-    } catch (error) {
-      console.log(error.message);
-    }
-    console.log("Listening in port 3001");
-  });
-}
-
-main();
+server.listen(3001, () => {
+  conn.sync({ force: true });
+  console.log("estamos conectado");
+});

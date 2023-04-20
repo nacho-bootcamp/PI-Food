@@ -1,10 +1,11 @@
 const express = require("express");
 const morgan = require("morgan");
-const router = require("../routes/index");
+const routes = require("../routes/index");
 
-const app = express();
-app.use(morgan("dev"));
-app.use(express.json);
-app.use(router);
+const server = express();
 
-module.exports = app;
+server.use(morgan("dev"));
+server.use(express.json());
+server.use(routes);
+
+module.exports = server;
